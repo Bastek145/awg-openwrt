@@ -1,36 +1,29 @@
-name: Build AmneziaWG for ZTE MF286D
+name: Build AmneziaWG APK (ZTE MF286D - SNAPSHOT)
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: "OpenWrt ${{ matrix.build_env.tag }} - ${{ matrix.build_env.target}}/${{ matrix.build_env.subtarget}}"
+    name: "OpenWrt SNAPSHOT - ipq40xx/generic"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        build_env:
-          - tag: "23.05.5"
-            pkgarch: arm_cortex-a7_neon-vfpv4
-            target: ipq40xx
-            subtarget: generic
 
     steps:
       - uses: actions/checkout@v4
         with:
           repository: openwrt/openwrt
-          ref: v${{ matrix.build_env.tag }}
+          ref: main
           fetch-depth: 0
 
       - name: Building kernel and tools
         run: |
-          # Setup & install feeds
-          wget https://downloads.openwrt.org/releases/${{ matrix.build_env.tag }}/targets/${{ matrix.build_env.target}}/${{ matrix.build_env.subtarget}}/feeds.buildinfo -O feeds.conf
+          # Feeds
+          wget https://downloads.openwrt.org/snapshots/targets/ipq40xx/generic/feeds.buildinfo -O feeds.conf
           echo "src-git awgopenwrt https://github.com/yury-sannikov/awg-openwrt.git" >> ./feeds.conf
           ./scripts/feeds update && ./scripts/feeds install -a
 
-          # Setup config
-          wget https://downloads.openwrt.org/releases/${{ matrix.build_env.tag }}/targets/${{ matrix.build_env.target}}/${{ matrix.build_env.subtarget}}/config.buildinfo -O .config
+          # Config
+          wget https://downloads.openwrt.org/snapshots/targets/ipq40xx/generic/config.buildinfo -O .config
           echo "CONFIG_PACKAGE_kmod-amneziawg=m" >> .config
           echo "CONFIG_PACKAGE_amneziawg-tools=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-amneziawg=y" >> .config
@@ -58,12 +51,11 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p awgrelease
-          find bin/ -name "amneziawg*.ipk" -exec cp {} awgrelease/ \;
-          find bin/ -name "kmod-amneziawg*.ipk" -exec cp {} awgrelease/ \;
-          find bin/ -name "luci-app-amneziawg*.ipk" -exec cp {} awgrelease/ \;
+          find bin/ -name "*amneziawg*.apk" -exec cp {} awgrelease/ \;
+          find bin/ -name "*amneziawg*.ipk" -exec cp {} awgrelease/ \;
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: amneziawg-zte-mf286d-23.05.5
-          path: awgrelease/*.ipk
+          name: amneziawg-zte-mf286d-apk
+          path: awgrelease/*

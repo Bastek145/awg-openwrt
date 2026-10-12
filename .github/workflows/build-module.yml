@@ -1,11 +1,11 @@
-name: Build AmneziaWG APK (ZTE MF286D - Fixed Vermagic)
+name: Build AmneziaWG APK (ZTE MF286D - Kernel 6.12)
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: "OpenWrt SNAPSHOT - ipq40xx/generic"
+    name: "OpenWrt SNAPSHOT (Kernel 6.12) - ipq40xx/generic"
     runs-on: ubuntu-latest
 
     steps:
@@ -17,9 +17,9 @@ jobs:
 
       - name: Building kernel and tools
         run: |
-          # Feeds
+          # Feeds - używamy zaktualizowanego repozytorium Slava-Shchipunov z obsługą jądra 6.12
           wget https://downloads.openwrt.org/snapshots/targets/ipq40xx/generic/feeds.buildinfo -O feeds.conf
-          echo "src-git awgopenwrt https://github.com/yury-sannikov/awg-openwrt.git" >> ./feeds.conf
+          echo "src-git awgopenwrt https://github.com/Slava-Shchipunov/awg-openwrt.git" >> ./feeds.conf
           ./scripts/feeds update && ./scripts/feeds install -a
 
           # Config
@@ -39,7 +39,6 @@ jobs:
 
       - name: Inject exact router vermagic
         run: |
-          # Podmiana identyfikatora vermagic na zgodny z routerem
           TARGET_VERMAGIC="5720c378674d36ddf4f2ee5282ab38bd"
           find build_dir/ -name ".vermagic" -exec sh -c 'echo "$1" > "$2"' _ "$TARGET_VERMAGIC" {} \;
           echo "Ustawiono vermagic na: $TARGET_VERMAGIC"
@@ -58,11 +57,10 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p awgrelease
-          find bin/ -name "*amneziawg*.apk" -exec cp {} awgrelease/ \;
-          find bin/ -name "*amneziawg*.ipk" -exec cp {} awgrelease/ \;
+          find bin/ -name "*.apk" | grep -E "amneziawg|kmod" | xargs -I {} cp {} awgrelease/
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: amneziawg-zte-mf286d-exact-vermagic
+          name: amneziawg-zte-mf286d-full-apk
           path: awgrelease/*

@@ -1,4 +1,4 @@
-name: Build AmneziaWG APK (ZTE MF286D - SNAPSHOT)
+name: Build AmneziaWG APK (ZTE MF286D - Fixed Vermagic)
 
 on:
   workflow_dispatch:
@@ -37,6 +37,13 @@ jobs:
           make toolchain/install -i -j `nproc`
           make target/linux/compile -i -j `nproc` V=s
 
+      - name: Inject exact router vermagic
+        run: |
+          # Podmiana identyfikatora vermagic na zgodny z routerem
+          TARGET_VERMAGIC="5720c378674d36ddf4f2ee5282ab38bd"
+          find build_dir/ -name ".vermagic" -exec sh -c 'echo "$1" > "$2"' _ "$TARGET_VERMAGIC" {} \;
+          echo "Ustawiono vermagic na: $TARGET_VERMAGIC"
+
       - name: Build AmneziaWG packages
         run: |
           make package/kmod-amneziawg/{clean,download,prepare} V=s || true
@@ -57,5 +64,5 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: amneziawg-zte-mf286d-apk
+          name: amneziawg-zte-mf286d-exact-vermagic
           path: awgrelease/*

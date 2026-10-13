@@ -1,18 +1,18 @@
-name: Build AmneziaWG APK (ZTE MF286D - Fixed Commit & Vermagic)
+name: Build AmneziaWG APK (ZTE MF286D - Fixed)
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: "OpenWrt SNAPSHOT (9495b6e74a) - ipq40xx/generic"
+    name: "OpenWrt SNAPSHOT - ipq40xx/generic"
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
           repository: openwrt/openwrt
-          ref: 9495b6e74a
+          ref: main
           fetch-depth: 0
 
       - name: Cache OpenWrt build tools & downloads
@@ -27,11 +27,12 @@ jobs:
 
       - name: Building kernel and tools
         run: |
+          # Pobranie feeds z repozytorium Slavy Shchipunova (działa pod kernel 6.12 i apk)
           wget https://downloads.openwrt.org/snapshots/targets/ipq40xx/generic/feeds.buildinfo -O feeds.conf
-          # Używamy zaktualizowanego źródła ze wsparciem dla kernela 6.12
           echo "src-git awgopenwrt https://github.com/Slava-Shchipunov/awg-openwrt.git" >> ./feeds.conf
           ./scripts/feeds update && ./scripts/feeds install -a
 
+          # Pobranie konfiguracji dla ipq40xx
           wget https://downloads.openwrt.org/snapshots/targets/ipq40xx/generic/config.buildinfo -O .config
           
           echo "CONFIG_PACKAGE_kmod-amneziawg=m" >> .config
